@@ -1,0 +1,42 @@
+from enum import StrEnum
+import json
+from dataclasses import dataclass, asdict
+
+
+class Vendor(StrEnum):
+    EDGECORE = "edgecore_sonic"
+    JUNIPER = "juniper_junos"
+    NOKIASRL = "nokia_srl"
+    NOKIASROS = "nokia_sros"
+    AUTO = "autodetect"
+
+
+@dataclass
+class NetworkDevice:
+    ipv4: str
+    name: str
+    vendor: Vendor
+
+
+def write_device(device, file):
+    file.write(json.dumps(asdict(device)))
+
+
+def get_device(name, file_path, op_client):
+    # scan file for device name(s)
+    # - stack of device names, popping once found
+    # - would rather index by IP, could perform binary
+    #   search on sorted 32 bit reps
+    # identify device if in datafile
+    with open(file_path, 'r') as file:
+        for line in file:
+            if line.find(name) != -1:
+                device_json = json.loads(line)
+                return NetworkDevice(**device_json)
+
+
+def id_device(name, op_client, url):
+    # if not already in datafile
+    # - get vendor from SSHDetect
+    # - get IP from DNS
+    pass

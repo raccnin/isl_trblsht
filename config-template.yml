@@ -1,0 +1,7 @@
+---
+op_user: 'onepass user'
+op_vault: 'onepass vault'
+op_item: 'onepass item with ssh password'
+
+id_file: "file to store device identification"
+ssh_user: "user to ssh into devices"
