@@ -14,32 +14,10 @@ import diagnose
 5. aggregate diagnostics
 '''
 
-
 def load_config():
     running_dir = config.resolve_directory()
     config_path = running_dir + '/config.yml'
     return config.load_config(config_path)
-
-
-def get_device(device_name, configuration, secret):
-    try:
-        device = device_id.get_device(device_name, configuration.id_file)
-    except LookupError:
-        # SSHDetect only actually works for junos :(
-        print(f"device {device_name} not known, getting vendor...")
-        device = device_id.id_device(device_name,
-                                     configuration.ssh_user,
-                                     secret)
-        device_id.write_device(device, configuration.id_file)
-        print(f"device identified as: {device.vendor}")
-    return device
-
-
-def get_diagnostics(diagnostic_request, configuration, secret):
-    print(f"running diagnostics for {diagnostic_request.device.name}...")
-    for diagnostic in diagnose.get_diagnostics(diagnostic_request, configuration.ssh_user, secret):
-        print(diagnostic)
-
 
 async def main():
 
@@ -54,10 +32,11 @@ async def main():
     device_name = sys.argv[1]
     port = sys.argv[2]
     lag = sys.argv[3]
-    device = get_device(device_name, conf, secret)
+    device = device_id.NetworkDevice(device_name)
     diagnostic_request = diagnose.DiagnosticRequest(device, port, lag)
-    # run diagnostic commands for device
-    get_diagnostics(diagnostic_request, conf, secret)
+    diagnostic_handler = diagnose.DiagnosticHandler(conf, secret)
+    diagnostic_handler.handle_request(diagnostic_request)
+
 
 if __name__ == '__main__':
     asyncio.run(main())

@@ -1,9 +1,8 @@
 import device_id
 from netmiko import ConnectHandler
 from dataclasses import dataclass
-from device_id import NetworkDevice
+from device_id import NetworkDevice, Vendor
 from config import Config
-import get_pass
 
 
 @dataclass
@@ -11,6 +10,40 @@ class DiagnosticRequest:
     device: NetworkDevice
     port: str
     lag: str
+
+
+class DiagnosticHandler:
+    config: Config
+    secret: str
+
+    def __init__(self, config, secret):
+        self.config = config
+        self.secret = secret
+
+    def identify_device(self, device: NetworkDevice):
+        # attempt file recognition
+        try:
+            candidate = device_id.get_device(device.name, self.config.id_file)
+            return candidate
+        except LookupError:
+            print(f"device {device.name} not known, querying vendor")
+            candidate = device_id.id_device(device.name,
+                                            self.config.ssh_user,
+                                            self.secret)
+            return candidate
+
+    def run_diagnostics(self, dr: DiagnosticRequest):
+        print(f"running diagnostics for {dr.device.name}")
+        for diagnostic in get_diagnostics(dr, 
+                                          self.config.ssh_user,
+                                          self.secret):
+            print(diagnostic)
+
+    def handle_request(self, dr: DiagnosticRequest):
+        if dr.device.vendor == Vendor.AUTO:
+           dr.device = self.identify_device(dr.device) 
+        self.run_diagnostics(dr)
+        
 
 
 def get_commands(dr: DiagnosticRequest):
