@@ -17,6 +17,15 @@ class NetworkDevice:
     name: str
     vendor: Vendor
 
+    def __init__(self, name, vendor=None):
+        self.name = name
+        if vendor == None:
+            self.vendor = Vendor.AUTO
+        elif type(vendor) == Vendor:
+            self.vendor = vendor
+        else:
+            self.vendor = Vendor(vendor)
+
     def to_netmiko(self, ssh_user, secret):
         return {
                 'device_type': str(self.vendor),
@@ -42,8 +51,7 @@ def get_device(device_name, file_path):
             if line.find(device_name) != -1:
                 device_json = json.loads(line)
                 return NetworkDevice(**device_json)
-    raise LookupError(f"get_device: could not locate device {device_name} in {file_path}")
-
+    raise LookupError
 
 def id_device(device_name, user, secret):
     # - get vendor from SSHDetect
@@ -90,6 +98,8 @@ def get_vendor_from_user():
         case 3:
             return Vendor.NOKIASROS
 
+
 def parse_alert(tsm_title):
+    # TODO
     # of the form: P3 - [Icinga] Service Alert: {A-device} - ISL Port: {port} {lag}-{B-device} is CRITICAL
     pass
